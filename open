@@ -1,0 +1,108 @@
+import telebot
+import openai
+from googletrans import Translator
+token = ''
+openai.api_key = ''
+bot = telebot.TeleBot(token)
+@bot.message_handler(commands=['start'])
+def start(message):
+    try:
+        x = open('spisok-1.txt','a')
+        x.write(f"{str(message.from_user.first_name)}{','}{str(message.from_user.last_name)}\n")
+        messi = f"Привет, <b>{message.from_user.first_name} {message.from_user.last_name}</b>"
+        bot.send_message(message.chat.id, messi, parse_mode='html')
+        bot.send_message(message.chat.id, '<u> все мои возможности /help </u>', parse_mode='html')
+        x.close()
+    except Exception as e:
+        bot.send_message(message.chat.id, 'Попробуй ещё раз')
+
+
+
+
+@bot.message_handler(commands='help')
+def help(message):
+    try:
+        createimage = '/photo: Могу создать изображение по твоему описанию, опиши подробно, что хочешь увидеть.'
+        talk = 'Могу сгенерировать любой текст, можешь выбрать переводить на Английский или нет!'
+        bot.send_message(message.chat.id, createimage)
+        bot.send_message(message.chat.id, 'Пример: /photo Сделай фотографию школьника перед ноутбуком')
+        bot.send_message(message.chat.id, talk)
+    except Exception as e:
+        bot.send_message(message.chat.id, 'Попробуй ещё раз')
+
+
+@bot.message_handler(commands='photo')
+def createimage(message):
+    x=open('spisok-2.txt','a')
+    try:
+        #f = message.text.split(maxsplit = 1)
+        translator=Translator()
+        text = message.text.split(maxsplit = 1)
+        a = translator.translate(text[1], dest = 'en')
+        response = openai.Image.create(
+            prompt=a.text,
+            n=1,
+            size="1024x1024"
+            )
+        image_url = response['data'][0]['url']
+        #x.write(f[1])
+        x.close()
+        bot.send_photo(message.chat.id, photo = image_url)
+    except Exception as e:
+        bot.send_message(message.chat.id, 'нужно описание!')
+
+
+
+
+
+
+@bot.message_handler(commands='en' )
+def hendker(message):
+    try:
+        translator=Translator()
+        text = message.text.split(maxsplit = 1)
+        a = translator.translate(text[1], dest = 'en')
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt= a.text,
+            temperature= 1.0,
+            max_tokens = 1200,
+            top_p=0.5,
+            frequency_penalty=0.8,
+            presence_penalty=0.6,
+        )  
+        bot.send_message(message.chat.id, text=response['choices'][0]['text'])
+    except Exception as e:
+        bot.send_message(message.chat.id, 'Попробуй ещё раз')
+
+
+@bot.message_handler(commands='Russian')
+def createtext(message):
+    try:
+        @bot.message_handler(content_types=['text'])
+        def hendker(message):
+            translator=Translator()
+            text = message.text
+            a = translator.translate(text, dest = 'en')
+            response = openai.Completion.create(
+                model="text-davinci-003",
+                prompt= a.text,
+                temperature= 1.0,
+                max_tokens = 1200,
+                top_p=0.5,
+                frequency_penalty=0.8,
+                presence_penalty=0.6,
+            )  
+            text = response['choices'][0]['text']
+            a = translator.translate(text, dest = 'ru')
+            bot.send_message(message.chat.id, a.text)
+    except Exception as e:
+        bot.send_message(message.chat.id, 'Попробуй ещё раз')
+       
+while True:
+    try:
+        bot.polling()
+    except Exception as e:
+        x=open('spisok-2.txt','a')
+        x.write('Устал работать')
+        x.close()
