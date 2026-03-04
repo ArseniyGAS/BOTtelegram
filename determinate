@@ -1,0 +1,105 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+void swap_rows(double*** matrix, int r1, int r2, int n)
+{
+    for (int j = 0; j < n; ++j)
+    {
+        double tmp = (*matrix)[r1][j];
+        (*matrix)[r1][j] = (*matrix)[r2][j];
+        (*matrix)[r2][j] = tmp;
+    }
+}
+
+void substraction_rows(double*** matrix, int r1, int r2, int n)
+{
+    double K = (*matrix)[r2][r1] / (*matrix)[r1][r1];
+    for (int j = 0; j < n; ++j)
+    {
+        (*matrix)[r2][j] -= K * (*matrix)[r1][j];
+    }
+}
+
+void Find_determinant(double** matrix, int n)
+{
+    double det = 1;
+    int col = 0; // номер текущего стобца
+    int flag = 1;
+
+    while (flag && col < n)
+    {
+        int pivot = -1;
+        int row = col;
+        int flag1 = 1;
+        while (flag1 && row < n)
+        {
+            if (matrix[row][col] != 0)
+            {
+                pivot = row;
+                flag1 = 0;
+            }
+            row++;
+        }
+
+        if (pivot == -1) // столбец полностью нулевой
+        {
+            flag = 0;
+            det = 0;
+        }
+
+        if (flag && pivot != col)
+        {
+            swap_rows(&matrix, col, pivot, n);
+            det = -det; // по свойству элеметарных преобразований строк
+        }
+
+        if (flag)
+        {
+            for (int row = col + 1; row < n; row++)
+            {
+                substraction_rows(&matrix, col, row, n);
+            }
+        }
+
+        col++;
+    }
+
+    if (flag)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            det *= matrix[i][i]; // находим определитель как произведение элементов на диагонали приведенной к треугольному виду матрицы
+        }
+    }
+
+    printf("%.02lf", det);
+}
+
+int main()
+{
+    int n;
+    scanf("%d", &n);
+
+    double** matrix = (double**)malloc(n * sizeof(double*));
+    for (int i = 0; i < n; ++i)
+    {
+        matrix[i] = (double*)malloc(n * sizeof(double));
+    }
+
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            scanf("%lf", &matrix[i][j]);
+        }
+    }
+
+    Find_determinant(matrix, n);
+
+    for (int i = 0; i < n; ++i)
+    {
+        free(matrix[i]);
+    }
+    free(matrix);
+    return 0;
+}
